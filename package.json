@@ -1,0 +1,16 @@
+{
+  "name": "s6_gql_server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node ./index.js"
+  },
+  "dependencies": {
+    "apollo-server": "^2.12.0",
+    "dotenv": "^8.2.0",
+    "graphql": "^15.0.0",
+    "graphql-import": "^1.0.2",
+    "mongodb": "^3.5.7"
+  }
+}

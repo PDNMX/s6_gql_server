@@ -1,0 +1,32 @@
+type Party {
+    ocid: String
+    _id: String
+}
+
+type SummaryCounts {
+    open: Int
+    selective: Int
+    direct: Int
+    other: Int
+}
+
+type SummaryAmounts {
+    open: Float
+    direct: Float
+    selective: Float
+    other: Float
+    total: Float
+}
+
+type Summary {
+    procedimientos: Int
+    instituciones: Int
+    counts: SummaryCounts
+    amounts: SummaryAmounts
+
+}
+
+type Query {
+    parties: [Party]
+    summary: Summary
+}
