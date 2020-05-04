@@ -1,4 +1,4 @@
-
+# Types
 type SummaryCounts {
     open: Int
     selective: Int
@@ -33,10 +33,140 @@ type Supplier {
     total: Float
 }
 
+# OCDS Types
+type Period {
+    startDate: String
+    endDate: String
+}
+
+type Address {
+    streetAddress: String
+    locality: String
+    region: String
+    postalCode: String
+    countryName: String
+}
+
+type Identifier {
+    id: String
+    legalName: String
+    scheme: String
+    uri: String
+}
+
+type ContactPoint {
+    name: String
+    email: String
+    telephone: String
+}
+
+type Value {
+    amount: Float
+    currency: String
+}
+
+type Unit {
+    name: String
+    value: Value
+}
+
+type Item {
+    id: String
+    description: String
+    #classification:
+    #additionalClassifications
+    quantity: Float
+    unit: Unit
+}
+
+type Document{
+    id: String
+    documentType: String
+    title: String
+    description: String
+    url: String
+    datePublished: String
+    dateModified: String
+    format: String
+    language: String
+}
+
+type Party {
+    id: String
+    name: String,
+    roles: [String]
+    identifier: Identifier
+    address: Address
+    contactPoint: ContactPoint
+}
+
+type Planning {
+    id: String
+}
+
+type Tender {
+    id: String
+    title: String
+    description: String
+    status: String
+    procuringEntity: Party
+    items: [Item]
+    documents: [Document]
+    value: Value
+    procurementMethod: String
+    procurementMethodRationale: String
+    submissionMethod: [String]
+    tenderPeriod: Period
+    enquiryPeriod: Period
+    hasEnquiries: Boolean
+    awardPeriod: Period
+}
+
+type Award {
+    id: String
+    title: String
+    status: String
+    value: Value,
+    suppliers: [Party]
+    items: [Item]
+    documents: [Document]
+    contractPeriod: Period
+}
+
+type Contract {
+    id: String
+    awardID: String
+    status: String
+    title: String
+    period: Period
+    value: Value
+    dateSigned: String
+    documents:Document
+    items: [Item]
+}
+
+type Release {
+    publisher: Party
+    language: String
+    ocid: String
+    cycle: String
+    tag: [String]
+    buyer: Party
+    id: String,
+    date: String
+    parties: [Party]
+    planning: Planning
+    tender: Tender
+    awards: Award
+    contracts: [Contract]
+}
+
+# Query / Mutation
 type Query {
     buyers: [Buyer]
     topBuyers (n: Int): [Buyer]
     topSuppliers (n: Int): [Supplier]
     summary: Summary
     cycles: [Int]
+    search: [Release]
 }

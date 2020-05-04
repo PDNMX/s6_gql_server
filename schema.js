@@ -117,6 +117,14 @@ const resolvers = {
             const cycles = await collection.distinct('cycle');
             client.close();
             return cycles.sort().reverse();
+        },
+        search: async (parent, args, context, info) => {
+            const client = await MongoClient.connect(url, client_options);
+            const db = client.db();
+            const collection = db.collection('edca_releases');
+            const releases = await collection.find().limit(10).toArray();
+            client.close();
+            return releases;
         }
     }
 };
