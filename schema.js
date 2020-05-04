@@ -54,18 +54,69 @@ const resolvers = {
                 }
             };
         },
-        parties: async () => {
-            let client;
-            try {
-                client = await MongoClient.connect(url, client_options);
-                const db = client.db();
-                const parties_ = db.collection('edca_parties');
-                const parties = parties_.find({}).limit(10).toArray();
-                client.close();
-                return parties;
-            } catch (e) {
-                console.log(e)
+        buyers: async () => {
+            const client = await MongoClient.connect(url, client_options);
+            const db = client.db();
+            const collection = db.collection('edca_buyers');
+            const buyers = await collection.find({}).toArray();
+            client.close();
+            return buyers;
+        },
+        topBuyers: async (parent, args, context, info) => {
+            let limit = args.n;
+
+            if (typeof limit === 'undefined'){
+                limit = 10;
+            } else if (isNaN(limit)){
+                limit = 10;
+            } else if (limit < 1 && limit > 100){
+                limit = 10;
             }
+
+            const client = await MongoClient.connect(url, client_options);
+            const db = client.db();
+            const collection = db.collection('edca_buyers_amounts');
+            let top = await collection.find({}, {limit: limit}).sort({total: -1}).toArray();
+
+            client.close();
+            top = top.map( b => ({
+                id: b._id.id,
+                name: b._id.name,
+                total: b.total
+            }));
+            return top;
+        },
+        topSuppliers: async (parent, args, context, info) => {
+            let limit = args.n;
+
+            if (typeof limit === 'undefined'){
+                limit = 10;
+            } else if (isNaN(limit)){
+                limit = 10;
+            } else if (limit < 1 && limit > 100){
+                limit = 10;
+            }
+
+            const client = await MongoClient.connect(url, client_options);
+            const db = client.db();
+            const collection = db.collection('edca_awards_suppliers');
+            let top = await collection.find({}, {limit: limit}).sort({"data.total": -1}).toArray();
+
+            client.close();
+            top = top.map( b => ({
+                id: b.data._id[0].id,
+                name: b.data._id[0].name,
+                total: b.data.total
+            }));
+            return top;
+        },
+        cycles: async () => {
+            const client = await MongoClient.connect(url, client_options);
+            const db = client.db();
+            const collection = db.collection('edca_releases');
+            const cycles = await collection.distinct('cycle');
+            client.close();
+            return cycles.sort().reverse();
         }
     }
 };
