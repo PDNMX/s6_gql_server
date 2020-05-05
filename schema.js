@@ -65,11 +65,7 @@ const resolvers = {
         topBuyers: async (parent, args, context, info) => {
             let limit = args.n;
 
-            if (typeof limit === 'undefined'){
-                limit = 10;
-            } else if (isNaN(limit)){
-                limit = 10;
-            } else if (limit < 1 && limit > 100){
+            if (typeof limit === 'undefined' || limit < 1 || limit > 100){
                 limit = 10;
             }
 
@@ -89,11 +85,7 @@ const resolvers = {
         topSuppliers: async (parent, args, context, info) => {
             let limit = args.n;
 
-            if (typeof limit === 'undefined'){
-                limit = 10;
-            } else if (isNaN(limit)){
-                limit = 10;
-            } else if (limit < 1 && limit > 100){
+            if (typeof limit === 'undefined' || limit < 1 || limit > 100){
                 limit = 10;
             }
 
@@ -119,12 +111,83 @@ const resolvers = {
             return cycles.sort().reverse();
         },
         search: async (parent, args, context, info) => {
+
+            const {
+                contract_title,
+                ocid,
+                buyer_id,
+                procurementMethod,
+                supplierName,
+                tender_title,
+                cycle,
+            } = args;
+
+            let {
+                page,
+                pageSize
+            } = args;
+
+
+            if (typeof page === 'undefined' || page < 1){
+                page = 0;
+            }
+
+            if (typeof pageSize === 'undefined' || pageSize < 1 || pageSize > 200){
+                pageSize = 10;
+            }
+
+            let query = {};
+
+            if (typeof ocid !== 'undefined'){
+                query["ocid"] = ocid
+            }
+
+            if (typeof buyer_id !== 'undefined'){
+                query["buyer.id"] = buyer_id ;
+            }
+
+            if (typeof procurementMethod !== 'undefined'){
+                query["tender.procurementMethod"] = procurementMethod;
+            }
+
+            if (typeof cycle !== 'undefined'){
+                query["cycle"] = cycle
+            }
+
+            if (typeof contract_title !== 'undefined'){
+                query["contracts.title"] = {$regex: contract_title, $options: 'i'};
+            }
+
+            if (typeof tender_title !== 'undefined'){
+                query["tender.title"] = {$regex: tender_title, $options: 'i'};
+            }
+
+            if (typeof supplierName !== 'undefined'){
+                query["$and"] = [
+                    {
+                        "parties.name":{
+                            $regex: supplierName, $options: 'i'
+                        }
+                    },
+                    {"parties.roles": 'buyer'}
+                ]
+            }
+
+            const skip = page * pageSize;
+
             const client = await MongoClient.connect(url, client_options);
             const db = client.db();
             const collection = db.collection('edca_releases');
-            const releases = await collection.find().limit(10).toArray();
+
+            const count = await collection.countDocuments(query);
+            const releases = await collection.find(query).skip(skip).limit(pageSize).toArray();
             client.close();
-            return releases;
+            return {
+                page: page,
+                pageSize: pageSize,
+                totalRows: count,
+                results: releases
+            };
         }
     }
 };

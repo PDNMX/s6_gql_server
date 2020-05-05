@@ -161,6 +161,13 @@ type Release {
     contracts: [Contract]
 }
 
+type Pagination {
+    page: Int
+    pageSize: Int
+    totalRows: Int
+    results: [Release]
+}
+
 # Query / Mutation
 type Query {
     buyers: [Buyer]
@@ -168,5 +175,15 @@ type Query {
     topSuppliers (n: Int): [Supplier]
     summary: Summary
     cycles: [Int]
-    search: [Release]
+    search (
+        contract_title: String
+        ocid: String
+        buyer_id: String
+        procurementMethod: String
+        supplierName: String
+        tender_title: String
+        cycle: String
+        page: Int
+        pageSize: Int
+    ): Pagination
 }
