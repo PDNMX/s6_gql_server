@@ -214,6 +214,19 @@ const resolvers = {
                 results: releases
             };
         },
+        getRelease: async (parent, {ocid}, {user}, info) => {
+            if (!user){
+                throw Error('Invalid login');
+            }
+
+            const client = await MongoClient.connect(url, client_options);
+            const db = client.db();
+            const collection = db.collection('edca_releases');
+            let release = await collection.findOne({ocid: ocid});
+            delete (release._id);
+            release = JSON.stringify(release, null, 4);
+            return release;
+        },
         currentUser: async (parent, args, {user}, info) => {
             if (!user){
                 throw Error('Not authenticated');

@@ -198,6 +198,7 @@ type Query {
         pageSize: Int
     ): Pagination
     currentUser: User!
+    getRelease(ocid: String): String
 }
 
 type Mutation {
