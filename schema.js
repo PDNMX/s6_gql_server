@@ -1,7 +1,9 @@
 //const {gql} = require('apollo-server');
 const {url, client_options} = require('./db_conf');
-const MongoClient = require('mongodb').MongoClient;
+const {ObjectId, MongoClient} = require('mongodb');
 const {importSchema} = require('graphql-import');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // A schema is a collection of type definitions (hence "typeDefs")
 // that together define the "shape" of queries that are executed against
@@ -11,7 +13,11 @@ const typeDefs = importSchema('schema.graphql');
 // Resolvers define the technique for fetching the types defined in the
 const resolvers = {
     Query: {
-        summary: async () => {
+        summary: async (parent, args, {user}, info) => {
+            if (!user){
+                throw Error('Not authenticated');
+            }
+
             const client = await MongoClient.connect(url, client_options);
             const db = client.db();
 
@@ -54,7 +60,11 @@ const resolvers = {
                 }
             };
         },
-        buyers: async () => {
+        buyers: async (parent, args, {user}, info) => {
+            if (!user){
+                throw Error('Not authenticated');
+            }
+
             const client = await MongoClient.connect(url, client_options);
             const db = client.db();
             const collection = db.collection('edca_buyers');
@@ -62,7 +72,11 @@ const resolvers = {
             client.close();
             return buyers;
         },
-        topBuyers: async (parent, args, context, info) => {
+        topBuyers: async (parent, args, {user}, info) => {
+            if (!user){
+                throw Error('Not authenticated');
+            }
+
             let limit = args.n;
 
             if (typeof limit === 'undefined' || limit < 1 || limit > 100){
@@ -82,7 +96,11 @@ const resolvers = {
             }));
             return top;
         },
-        topSuppliers: async (parent, args, context, info) => {
+        topSuppliers: async (parent, args, {user}, info) => {
+            if (!user){
+                throw Error('Not authenticated');
+            }
+
             let limit = args.n;
 
             if (typeof limit === 'undefined' || limit < 1 || limit > 100){
@@ -102,7 +120,11 @@ const resolvers = {
             }));
             return top;
         },
-        cycles: async () => {
+        cycles: async (parent, args, {user}, info) => {
+            if (!user){
+                throw Error('Not authenticated');
+            }
+
             const client = await MongoClient.connect(url, client_options);
             const db = client.db();
             const collection = db.collection('edca_releases');
@@ -110,7 +132,10 @@ const resolvers = {
             client.close();
             return cycles.sort().reverse();
         },
-        search: async (parent, args, context, info) => {
+        search: async (parent, args, {user}, info) => {
+            if (!user){
+                throw Error('Not authenticated');
+            }
 
             const {
                 contract_title,
@@ -188,11 +213,71 @@ const resolvers = {
                 totalRows: count,
                 results: releases
             };
+        },
+        currentUser: async (parent, args, {user}, info) => {
+            if (!user){
+                throw Error('Not authenticated');
+            }
+
+            const client = await MongoClient.connect(url, client_options);
+            const db = client.db();
+            const collection = db.collection('edca_users');
+
+            const user_ = await collection.findOne({_id: ObjectId(user.id)});
+            user_.id = user_._id.toString();
+            return user_;
         }
+    },
+    Mutation: {
+        login: async (parent, {username, password}, context, info ) => {
+            const client = await MongoClient.connect(url, client_options);
+            const db = client.db();
+            const collection = db.collection('edca_users');
+            const user = await collection.findOne({username: username });
+
+            if (!user){
+                throw new Error('Invalid login')
+            }
+
+            const passwordMatch = await bcrypt.compare(password, user.password);
+
+            if (!passwordMatch){
+                throw new Error('Wrong password');
+            }
+
+            user.id = user._id.toString();
+
+            const token = jwt.sign({
+                    id: user.id,
+                    username: user.username
+                },
+                process.env.JWT_SECRET,
+                {
+                    expiresIn: process.env.JWT_EXPIRES_IN || '1d'
+                });
+
+            return {
+                token,
+                user
+            }
+
+        }
+    }
+};
+
+const getUser = token => {
+    try {
+        if (token){
+            return jwt.verify(token, process.env.JWT_SECRET)
+        }
+        return null;
+    } catch (e) {
+        return null;
     }
 };
 
 module.exports = {
     typeDefs,
-    resolvers
+    resolvers,
+    getUser
 }

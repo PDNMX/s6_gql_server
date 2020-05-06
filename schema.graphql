@@ -168,6 +168,17 @@ type Pagination {
     results: [Release]
 }
 
+# Auth
+type User {
+    id: ID!
+    username: String!
+}
+
+type LoginResponse {
+    token: String
+    user: User
+}
+
 # Query / Mutation
 type Query {
     buyers: [Buyer]
@@ -186,4 +197,12 @@ type Query {
         page: Int
         pageSize: Int
     ): Pagination
+    currentUser: User!
+}
+
+type Mutation {
+    login(
+        username: String!,
+        password: String!
+    ): LoginResponse!
 }
