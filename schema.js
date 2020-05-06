@@ -268,7 +268,7 @@ const resolvers = {
 const getUser = token => {
     try {
         if (token){
-            return jwt.verify(token, process.env.JWT_SECRET)
+            return jwt.verify(token, process.env.JWT_SECRET);
         }
         return null;
     } catch (e) {
