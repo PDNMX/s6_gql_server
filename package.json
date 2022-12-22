@@ -12,7 +12,7 @@
     "dotenv": "^8.2.0",
     "graphql": "^15.0.0",
     "graphql-import": "^1.0.2",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "mongodb": "^3.5.7"
   }
 }
